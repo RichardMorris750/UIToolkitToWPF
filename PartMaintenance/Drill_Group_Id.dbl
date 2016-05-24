@@ -1,0 +1,99 @@
+.include 'INC:program.def'
+
+subroutine Drill_Group_Id
+.include 'WND:inpinf.def'
+a_inprec,       a
+.include 'INC:program_data.def'
+endparams
+
+.include 'WND:tools.def'
+
+record 
+	request			,i4
+	fldnam			,a30
+	setnam			,a30
+
+endrecord
+
+record 
+	lookupListID		,i4
+	lookupInpID			,i4
+endrecord
+
+proc
+	
+	if (DoingWPF)
+		xreturn
+
+	e_enter()
+	
+	i_ldinp(lookupInpID,, "grplist", D_NOPLC)
+	l_create(lookupListID, lookupInpID, group_data, g_utlib, "grplclass",,, D_NOPLC)
+	l_button(lookupListID, DSB_ADD, "O_ABANDON", DSB_TEXT, "Cancel")
+	l_sect(lookupListID, "ID                  Description", D_HEADER)
+	
+	l_place(lookupListID, 5, 10)
+	repeat
+	begin
+		l_select(lookupListID, request = D_LNOP, group_data,,,,,,,,,,,,, program_data)
+		if (!g_select) then
+		begin
+			;;item selected
+			setnam = %i_getstring(inp_wndid, inp_setnam)
+			fldnam = %i_getstring(inp_wndid, inp_fldnam)
+			xcall i_next(inp_wndid, setnam, fldnam)
+			xcall i_force(group_data.group_id)
+			exitloop
+		end
+		else
+		begin
+			if g_entnam == "O_ABANDON" exitloop
+		end
+	end
+	
+	e_exit()
+	
+	xreturn
+	
+endsubroutine
+
+subroutine Drill_Group_Id_load
+a_listid,       n
+a_request,      n
+group a_data,   a
+.include 'group' repository, norecord
+endgroup
+a_inpid,        n
+a_disabled,     n
+a_itemindex,    n
+.include 'INC:program_data.def'
+; end of argument list	
+
+.include 'WND:tools.def'
+
+proc
+	if (a_itemindex <= 1) then
+	begin
+		read(groupChanID, a_data, ^FIRST)
+	end
+	else
+	begin
+		reads(groupChanID, a_data, eof)
+		if (0)
+		begin
+eof,
+			a_request = D_LEOF
+		end
+	end
+
+	;;#SNIPPET+#
+	
+	if (a_request != D_LEOF)
+		if (DoingTK)
+			i_display(a_inpid,, a_data)
+	
+	;;#SNIPPET-#
+
+	xreturn
+	
+endsubroutine

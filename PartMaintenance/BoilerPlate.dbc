@@ -1,0 +1,342 @@
+.include 'SRC:PartMaintNET.inc'
+
+namespace PartMaintNet
+
+	public class BoilerPlate
+		
+		static method BoilerPlate
+		proc
+			startUp()
+			
+			;;create WPF window
+			mAppWindow = new MainView()
+			
+			;;create the view model and assign to the window
+			mAppVM = new PartMaintenanceViewModel((FrameworkElement)mAppWindow)
+			mAppWindow.DataContext = mAppVM
+			
+			;;#SNIPPET+#
+			addHandler(mAppVM.TKMenuSignal, doTKMenuSignal)
+			addHandler(mAppVM.LookupLoad, doListLoadMethod)
+			addHandler(mAppVM.ChangeMethod, doChangeMethod)
+			;;#SNIPPET-#
+
+		endmethod
+		
+		private static mAppWindow			,@MainView
+		private static mAppVM				,@PartMaintenanceViewModel
+		
+		public static property ProgramVM	,@PartMaintenanceViewModel
+			method get
+			proc
+				mreturn mAppVM
+			endmethod
+		endproperty
+		
+		private static method startUp	,void
+			endparams
+			record localData
+				logResult	,a10
+				logLength	,i1
+			endrecord
+		proc
+			init localData
+
+			;;see if we want UI Toolkit or WPF
+			getlog("SYMPHONY_RUNNING_WPF", logResult, logLength)
+			upcase logResult
+			if (logLength && %instr(1, logResult, "TRUE")) then
+			begin
+				;;ensure DLL's are up and running
+				bootStrap()
+
+				RunningToolkit = false
+				RunningWPF = true
+			end
+			else
+			begin	
+				RunningToolkit = true
+				RunningWPF = false
+			end
+
+			ProgramState = ProgramStates.Null
+
+			mreturn
+
+		endmethod
+
+		public static RunningToolkit	,boolean	,true
+		public static RunningWPF		,boolean	,false
+		
+		private static method bootStrap	,void
+		endparams
+		record 
+			i	,@DotNetAssembly
+		endrecord
+
+		proc
+			i = new DotNetAssembly("NETEXE:System.Windows.Interactivity.dll")
+			Symphony.Conductor.Initializer.Execute()
+			Symphony.Crescendo.Initializer.Execute()
+			mreturn
+		endmethod
+		
+		private static method doTKMenuSignal    ,void
+            sender                              ,@object
+            menuName                            ,string
+            endparams
+			
+		.include 'WND:tools.def'
+
+		record
+			.include 'INC:program_data.def'
+		endrecord
+
+		structure memStr
+			fld	,a1
+		endstructure
+
+        proc
+			
+			program_data = ^m(memStr(1:mAppVM.ProgramDataSize), mAppVM.ProgramDataHandle)
+			program_Data.part_data = mAppVM.PartItem.SynergyRecord
+			
+			;;#SNIPPET+#
+			g_entnam = %atrim(menuName)
+			g_select = 1
+			g_setsts = 0
+					
+			using g_entnam select
+			("STARTUP"),
+			begin
+				ProgramState = ProgramStates.StartUp
+				xsubr("PartMaint", program_data)
+						
+				ProgramState = ProgramStates.StartUp
+				xsubr("Part_list", program_data)
+			end
+			("SHUTDOWN"),
+			begin
+				ProgramState = ProgramStates.Shutdown
+				xsubr("PartMaint", program_data)
+			end
+			("F_EXIT"),
+			begin
+				using mAppVM.CurrentStateName select
+				("InputViewState"),
+				begin
+					ProgramState = ProgramStates.MenuSignal
+					xsubr("Part_input", program_data)
+				end
+				("MainViewState"),
+				begin
+					ProgramState = ProgramStates.MenuSignal
+					xsubr("Part_list", program_data)
+				end
+				endusing
+				ProgramState = ProgramStates.Shutdown
+				xsubr("PartMaint", program_data)
+			end
+			("F_NEW"),
+			begin
+				ProgramState = ProgramStates.MenuSignal
+				xsubr("Part_list", 0, program_data)
+				
+				ProgramState = ProgramStates.StartUp
+				xsubr("Part_input", 0, program_data)
+				
+				mAppVM.MoveToState("InputViewState")
+			end
+			("F_MODIFY"),
+			begin
+				ProgramState = ProgramStates.MenuSignal
+				xsubr("Part_list", 0, program_data)
+						
+				ProgramState = ProgramStates.StartUp
+				xsubr("Part_input", 0, program_data)
+						
+				mAppVM.MoveToState("InputViewState")
+			end
+			("B_SAVE", "B_CANCEL", "B_DELETE"),
+			begin 
+				ProgramState = ProgramStates.MenuSignal
+				xsubr("Part_input", 0, program_data)
+				
+				;;we only complete the state if the part data object is valid
+				if (g_entnam != "B_SAVE" || 
+			&		(g_entnam == "B_SAVE" && mAppVM.PartItem.IsDataValid == true))
+				begin
+					mAppVM.StateCompleted()
+					
+					ProgramState = ProgramStates.StartUp
+					xsubr("Part_list", 0, program_data)
+				end
+			end
+			endusing
+
+			;;#SNIPPET-#
+				
+			^m(memStr(1:mAppVM.ProgramDataSize), mAppVM.ProgramDataHandle) = program_data
+			
+			mreturn
+			
+		endmethod
+
+			
+        private static mListMemSize         ,i4
+        private static mListMemPnt          ,i4
+
+		private static method doListLoadMethod	,void
+		in req    hostMethodName     	       	,string
+		req in    loadMethodName     	       	,string
+		req in    loadDataSize       	       	,i4
+		req in    loadItemNumber     	       	,i4
+		req inout endOfList          	    	,boolean
+		req inout listData           	      	,string
+		in req progDataHdl						,i4
+		in req progDataSize						,i4
+		endparams
+		
+		.define D_DEFINES_ONLY
+		.include 'WND:tools.def'
+
+		structure memStr
+			memFld  ,a1
+		endstructure
+
+		record
+			listRequest ,i1
+			itemNumber	,i4
+		endrecord
+			
+		record
+			.include 'INC:program_data.def'
+		endrecord
+
+	proc
+		
+		program_data = ^m(memStr(1:mAppVM.ProgramDataSize), mAppVM.ProgramDataHandle)
+		
+		itemNumber = loadItemNumber
+		
+		;;#SNIPPET+#
+		if (!mListMemPnt) then
+		begin
+			;;need memory allocating
+			mListMemPnt = %mem_proc(DM_ALLOC.bor.DM_STATIC, loadDataSize)
+		end
+		else
+		begin
+			if (mListMemSize != loadDataSize)
+			begin
+				;;need memory resizing
+				mListMemPnt = %mem_proc(DM_RESIZ, loadDataSize, mListMemPnt)
+			end
+		end
+
+		clear ^m(memStr(1:loadDataSize), mListMemPnt)
+
+		if (!itemNumber)
+		begin
+			;;this is the first time in
+			;;call the host and initialize
+			ProgramState = ProgramStates.StartUp
+			if (hostMethodName.Length != 0)
+				xsubr(hostMethodName)
+			itemNumber = 1
+			mreturn
+		end
+
+		;;call the requested load method
+		ProgramState = ProgramStates.ListLoad
+		xsubr(loadMethodName, -1, listRequest = D_LLOADBOT,
+		&	^m(memStr(1:loadDataSize), mListMemPnt), -1,, itemNumber, program_data)
+					
+		;;end of list load??
+		if (listRequest == D_LEOF) then
+		begin
+			endOfList = true
+		end
+		else
+		begin
+			endOfList = false
+			listData = ^m(memStr(1:loadDataSize), mListMemPnt)
+		end
+
+		;;#SNIPPET-#
+
+		ProgramState = ProgramStates.Null
+		
+	endmethod
+	
+	private static method doChangeMethod	,void
+		in rpsName								,string
+		inout messageData						,@DataChangedMessage
+		endparams
+
+		structure memStr
+			memFld  ,a1
+		endstructure
+
+		record
+			.include 'INC:program_data.def'
+		endrecord
+		
+		record 
+			methodToCall	,a32
+			dataStart		,i4
+			dataEnd			,i4
+			pending			,i4
+			result			,i4
+		endrecord
+	 
+	proc
+
+		;;SNIPPET+#
+		program_data = ^m(memStr(1:mAppVM.ProgramDataSize), mAppVM.ProgramDataHandle)
+		program_data.part_data = mAppVM.PartItem.SynergyRecord
+					
+		methodToCall = messageData.ChangeMethodName
+		dataStart = messageData.FieldStartPos
+		dataEnd = messageData.FieldLength
+					
+		result = xsubr(methodToCall, part_data(dataStart:dataEnd), 
+		&	part_data(dataStart:dataEnd), pending = 0, , part_data, program_data)
+					
+		^m(memStr(1:mAppVM.ProgramDataSize), mAppVM.ProgramDataHandle) = program_data
+;		if (pending)
+;		begin
+;			messageData.FailReason = "oh dear"
+;			messageData.ValidationState = DataValidationState.Error
+;		end
+
+		;;SNIPPET-#
+		
+	endmethod
+	
+		public enum ProgramStates
+			Null
+			StartUp
+			MenuSignal
+			FieldProcessing
+			InputSetComplete
+			ListLoad
+			Shutdown
+		endenum
+
+		private static mProgramState	,ProgramStates
+		public static property ProgramState	,ProgramStates
+			method get
+			proc
+				mreturn mProgramState
+			endmethod
+			method set
+			proc
+				mProgramState = value
+			endmethod
+		endproperty
+
+		
+	endclass
+	
+endnamespace

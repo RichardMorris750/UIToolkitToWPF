@@ -1,0 +1,19 @@
+<?xml version='1.0'?>
+<assemblies>
+    <assembly Name = "NETEXE:WPFPartMaintenance.dll" />
+    <assembly Name = "NETEXE:SymphonyConductor.dll" />
+    <assembly Name = "NETEXE:SymphonyCore.dll" />
+    <assembly Name = "NETEXE:SymphonyCrescendo.dll" />
+    <assembly Name = "NETEXE:SymphonyUIToolkit.dll" />
+    <assembly Name = "NETEXE:System.Windows.Interactivity.dll" />
+    <assembly Name = "PresentationCore">
+        <Class Name = "System.Windows.UIElement" />
+    </assembly>
+    <assembly Name = "PresentationFramework">
+        <Class Name = "System.Windows.Application" />
+        <Class Name = "System.Windows.FrameworkElement" />
+        <Class Name = "System.Windows.Window" />
+        <Class Name = "System.Windows.Controls.ContentControl" />
+    </assembly>
+</assemblies>
+

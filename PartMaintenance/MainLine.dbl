@@ -1,0 +1,31 @@
+.include 'INC:program.def'
+main 
+.include 'WND:tools.def'
+	
+record
+	.include 'INC:program_data.def'
+endrecord
+
+		structure memStr
+			fld	,a1
+		endstructure
+	
+proc
+	if (DoingWPF) then
+	begin
+		;;need to "store" the program wide data
+
+		;;#SNIPPET+#
+		prgVM.ProgramDataHandle = %mem_proc(DM_REG + DM_STATIC,
+		&	 ^size(program_data), ^addr(program_data))
+		prgVM.ProgramDataSize = ^size(program_data)
+		;;#SNIPPET-#
+
+		prgVM.ShowWindow()
+	end
+	else
+	begin
+		PartMaint(program_data)
+	end
+endmain
+

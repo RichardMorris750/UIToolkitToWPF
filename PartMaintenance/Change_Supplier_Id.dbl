@@ -1,0 +1,45 @@
+.include 'INC:program.def'
+
+function Change_Supplier_Id ,^VAL
+a_data_entered,         a
+a_data_stored,          a
+a_pending,              n       ;pending status
+.include 'WND:inpinf.def'
+a_data,                 a
+.include 'INC:program_data.def'
+;end of argument list
+
+.include 'WND:tools.def'
+
+proc
+
+	if (a_pending == D_OK)
+	begin
+		
+		;;#SNIPPET+CHANGE#
+		if (DoingWPF) prgVM.PartItem.FieldValidDetails("SUPPLIERID")
+		;;#SNIPPET-CHANGE#
+
+		read(supplierChanID, supplier_data, a_data_stored) [ERR=fileError]
+		if (0)
+		begin
+fileError,
+			a_pending = D_EMITTEDERR
+
+			if (DoingTK) then 
+			begin
+				u_message("Supplier details not found")
+			end
+			else
+			begin
+				;;#SNIPPET+INVALID#
+				prgVM.PartItem.FieldErrorDetails("SUPPLIERID", "Supplier details not found")
+				;;#SNIPPET-INVALID#
+			end
+		end
+	end
+	freturn a_pending
+	
+endfunction
+
+

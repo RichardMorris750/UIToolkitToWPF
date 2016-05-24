@@ -1,0 +1,71 @@
+﻿<UserControl x:Class="WPFPartMaintenance.View.GroupList"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+             xmlns:symTrigger="clr-namespace:Symphony.Conductor.Triggers;assembly=SymphonyConductor"
+             mc:Ignorable="d" Width="500" Height="400"
+             d:DesignHeight="300" d:DesignWidth="300">
+
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/SymphonyConductor;component/Resources/Converters.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/WPFPartMaintenance;component/Resources/Application.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/WPFPartMaintenance;component/Resources/Group_Style.CodeGen.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+
+    </UserControl.Resources>
+
+    <Grid>
+
+        <Border CornerRadius="2" BorderThickness="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#d7e6f9">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="24"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <!-- title border -->
+                <Grid Grid.Row="0" MouseLeftButtonUp="root_MouseLeftButtonUp" MouseLeftButtonDown="root_MouseLeftButtonDown" MouseMove="root_MouseMove">
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                               Text="Group lookup" FontSize="16" Margin="2,2,0,0">
+                    </TextBlock>
+
+                    <Button Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Right" Width="22" Height="22" Margin="0,2,2,0"
+                                    Command="{Binding Path=QuitState}" Style="{StaticResource TransperentButtonStyle}">
+                        <Button.Content>
+                            <Image Source="pack://application:,,,/SymphonyCrescendo;component/Images/16x16/Cross.png"></Image>
+
+                        </Button.Content>
+                    </Button>
+                </Grid>
+
+                <!-- main display area -->
+                <DataGrid Grid.Row="1" Margin="2,8,2,2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          ItemsSource="{Binding Path=GroupList}" SelectedValue="{Binding Path=GroupListItem}"
+                          AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" CanUserAddRows="False" CanUserDeleteRows="False"
+                          CanUserResizeRows="False" CanUserSortColumns="True">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseDoubleClick">
+                            <symTrigger:UIElementGenericCommander Command="{Binding Path=GroupSelect}"></symTrigger:UIElementGenericCommander>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="{StaticResource Group_Group_id_heading}" Binding="{Binding Path=Group_id}" Width="*"></DataGridTextColumn>
+                        <DataGridTextColumn Header="{StaticResource Group_Description_heading}" Binding="{Binding Path=Description}" Width="*"></DataGridTextColumn>
+                    </DataGrid.Columns>
+
+                </DataGrid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

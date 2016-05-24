@@ -1,0 +1,116 @@
+import System
+import System.Collections.Generic
+import System.Text
+import Symphony.Conductor.Model
+import Symphony.Conductor.ViewModel
+import Symphony.Conductor.Types
+import Symphony.Conductor.Commands
+import System.Reflection
+import Linq
+
+namespace WPFPartMaintenance.ViewModel
+
+	public class GenericListLoad extends BaseViewModel
+	
+.region "Constructor"
+		
+		public method GenericListLoad
+			req in hostMethodName		,string
+			req in loadMethodName		,string
+			req in loadDataSize			,Int32
+			req in objectType			,@Type 
+			req in listCollection		,@Object
+			endparams
+		proc
+			mListCollection = (AsyncObservableCollection<DataObjectBase>)listCollection
+			mHostMethodName = hostMethodName
+			mLoadMethodName = loadMethodName
+			mLoadDataSize = loadDataSize
+			mObjectType = objectType
+			
+			mreturn
+		endmethod
+		
+.endregion
+
+		private mListCollection		,@AsyncObservableCollection<DataObjectBase> 
+		private mHostMethodName		,string
+		private mLoadMethodName		,string
+		private mLoadDataSize		,Int32
+		private mObjectType			,@Type
+
+.region "collection loading"
+		
+		public method PerformLoad	,void
+			endparams
+			
+			structure tmpStr
+				fld	,a1
+			endstructure
+		proc
+			;;use the load method to load the collection
+			
+			mListCollection.ClearCollection()
+			data endOfList	,boolean	,false
+			data listData	,string		,""
+			data listItem	,Int32		,0
+			
+			
+			
+			data classTypeInfo		,@TypeInfo			,IntrospectionExtensions.GetTypeInfo(mObjectType)
+			if (classTypeInfo != ^null)
+			begin
+				data classConstructor	,@ConstructorInfo
+				
+				data item	,@ConstructorInfo
+				foreach item in classTypeInfo.DeclaredConstructors
+				begin
+					classConstructor = item
+					if (classConstructor.ToString() == "Void .ctor(System.String)")
+						exitloop
+				end
+				
+				data ctorArgs			,[#]@Object	,new Object[1]
+				repeat 
+				begin
+					raiseevent(LookupLoad, mHostMethodName, mLoadMethodName, mLoadDataSize, listItem, endOfList, listData)
+					if (endOfList)
+						exitloop
+						
+					if (listItem)
+					begin
+						;;create a new object and add it to the colleciton
+						
+						ctorArgs[1] = listData
+						data classInstance = classConstructor.Invoke(ctorArgs)
+						
+						mListCollection.AddToCollection((DataObjectBase)classInstance)
+					end
+					incr listItem
+					
+				end
+			end
+			
+		endmethod
+		
+.endregion
+		
+		
+.region "Lookup processing methods"
+		
+		public delegate LookupLoadEventHandler	,void
+			req in    hostMethodName			,string
+			req in    loadMethodName			,string
+			req in    loadDataSize				,Int32
+			req in    loadItemNumber			,Int32
+			req inout endOfList					,boolean
+			req inout listData					,string
+		enddelegate
+		
+		public event LookupLoad	,@LookupLoadEventHandler
+		
+.endregion
+		
+	endclass
+
+endnamespace

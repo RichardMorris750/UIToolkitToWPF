@@ -1,0 +1,60 @@
+.script
+
+.column c_file, "File"
+.entry f_new, "New"
+.line
+.entry f_exit, "Exit"
+.end
+
+.input partlist, 1, 80
+.title "Part list"
+.repository_structure part
+.field ID, noprompt
+.field DESCRIPTION, noprompt
+.end
+
+.listclass partlclass, load_method(part_load), headers(1)
+.placement 1, 1
+.end
+
+.input partitem, 8, 78
+.title "Part item"
+.repository_structure part
+.field ID, pos(2, 2), fpos(2, 20)
+.field GROUPID, pos(3, 2), fpos(3, 20), noselwnd
+.field SUPPLIERID, pos(4, 2), fpos(4, 20), noselwnd
+.field DESCRIPTION, pos(5, 2), fpos(5, 20)
+.field QUANTITY, pos(6, 2), fpos(6, 20)
+.field COST_PRICE, pos(7, 2), fpos(7, 20)
+.button B_SAVE, Text(Save)
+.button B_CANCEL, Text(Cancel)
+.button B_DELETE, Text(Delete)
+.set all ,PART, ID, GROUPID, SUPPLIERID, DESCRIPTION, QUANTITY, COST_PRICE
+.end
+
+.input grplist, 1, 150
+.display_area 1,1,1,60
+.title "Group list"
+.repository_structure group
+.field GROUP_ID, noprompt
+.field DESCRIPTION, noprompt
+.end
+
+.listclass grplclass, load_method(Drill_Group_Id_load), headers(1), items(5)
+.placement 1, 1
+.end
+
+.input suplist, 1, 80
+.display_area 1,1,1,60
+.title "Supplier list"
+.repository_structure supplier
+.field SUPPLIER_ID, noprompt
+.field NAME, noprompt
+.end
+
+.listclass suplclass, load_method(Drill_Supplier_Id_load), headers(1), items(10)
+.placement 1, 1
+.end
+
+
+

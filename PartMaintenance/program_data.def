@@ -1,0 +1,28 @@
+group program_data
+	group toolkit
+		menuFileID		,i4
+		listWinID		,i4
+		listID			,i4
+		inputWinID		,i4
+		tabID			,i4
+		inpmode			,a20
+	endgroup
+
+	;;channels
+	group channel_info
+		partChanID		,i4
+		groupChanID		,i4
+		supplierChanID	,i4
+	endgroup
+
+	group part_data
+	.include 'part' repository, norecord
+	endgroup
+	group group_data
+	.include 'group' repository, norecord
+	endgroup
+	group supplier_data
+	.include 'supplier' repository, norecord
+	endgroup
+endgroup
+

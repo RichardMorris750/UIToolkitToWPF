@@ -1,0 +1,91 @@
+.include 'INC:program.def'
+
+subroutine PartMaint
+.include 'INC:program_data.def'
+endparams
+
+.include 'WND:tools.def'
+
+	
+proc
+	if (WPFStartup) call startup
+	if (WPFMenuSignal) call process
+	if (WPFShutDown) call shutdown
+	xreturn
+	
+	;;routine to perform applcaiton startup
+startup,
+	if (DoingTK) then
+	begin
+		u_start("UILIB:PartLibrary.ism", 1, 1, ,24, 80)
+		
+		e_method(D_METH_ENTRST, "eentrst_method")
+		
+		e_sect("Part Data Maintenance", D_CAPTION)
+
+		;;load menus
+		m_ldcol(menuFileID, , "c_file",,,, D_GLOBAL)
+
+		;;load windows
+		i_ldinp(listWinID,, "partlist", D_NOPLC)
+		l_create(listID, listWinID, part_data, g_utlib, "partlclass",,, D_NOPLC)
+		l_sect(listID, "ID                  Description", D_HEADER)
+		
+		;;build the tab container
+		tabID = %ts_tabset(DTS_CREATE, "container", 15, 80)
+		ts_tabset(DTS_LIST, tabID, listID, "part_list")
+		
+		i_ldinp(inputWinID,, "partitem", D_NOPLC)
+		ts_tabset(DTS_WINDOW, tabID, inputWinID, "part_input")
+		
+	end
+	else
+	begin
+		u_start()
+	end
+
+	;;open data file
+	partChanID = %syn_freechn(257)
+	u_open(partChanID, "u:i", 'SYMPHONYDATA:parts.ism')
+	u_open(groupChanID, "i:i", 'SYMPHONYDATA:groups.ism')
+	u_open(supplierChanID, "i:i", 'SYMPHONYDATA:suppliers.ism')
+
+	return
+	
+process,
+	
+	repeat
+	begin
+		if (DoingTK)
+			ts_process(tabID, program_Data)
+		using g_entnam select
+		("F_EXIT"),
+			exitloop
+		endusing
+	end
+	
+	return
+	
+shutdown,
+	
+	u_close(partChanID)
+	u_close(groupChanID)
+	u_close(supplierChanID)
+	
+	u_finish()
+	
+	return
+endsubroutine
+
+
+subroutine eentrst_method
+	a_nomod ,n
+	a_reset ,n
+
+.include 'WND:tools.def'
+proc
+	if(g_entnam.ne.'I_CANCEL'.and..not.a_nomod)
+		a_reset = 0
+	xreturn
+	
+endsubroutine

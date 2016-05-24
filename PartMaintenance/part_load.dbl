@@ -1,0 +1,42 @@
+.include 'INC:program.def'
+
+subroutine part_load
+a_listid,       n
+a_request,      n
+group a_data,   a
+.include 'part' repository, norecord
+endgroup
+a_inpid,        n
+a_disabled,     n
+a_itemindex,    n
+.include 'INC:program_data.def'
+; end of argument list
+
+.include 'WND:tools.def'
+
+proc
+	if (a_itemindex <= 1) then
+	begin
+		read(partChanID, a_data, ^FIRST)
+	end
+	else
+	begin
+		reads(partChanID, a_data, eof)
+		if (0)
+		begin
+eof,
+			a_request = D_LEOF
+		end
+	end
+
+	;;#SNIPPET+#
+	
+	if (a_request != D_LEOF)
+		if (DoingTK)
+			i_display(a_inpid,, a_data)
+
+	;;#SNIPPET-#
+		
+	xreturn
+	
+endsubroutine

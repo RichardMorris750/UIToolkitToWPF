@@ -243,3 +243,10 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+*.dbr
+*.DBO
+*.DBP
+*.vpwhist
+*.vtg
+*.in
+/WPFPartMaintenance/WPFPartMaintenance.g.resources

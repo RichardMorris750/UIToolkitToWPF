@@ -1,0 +1,13 @@
+.define DoingTK					PartMaintNet.BoilerPlate.RunningToolkit
+.define DoingWPF				PartMaintNet.BoilerPlate.RunningWPF
+.define prgVM					PartMaintNet.BoilerPlate.ProgramVM
+.define WPFStartup				PartMaintNet.BoilerPlate.RunningToolkit .or. (PartMaintNet.BoilerPlate.RunningWPF .and. PartMaintNet.BoilerPlate.ProgramState .eq. PartMaintNet.BoilerPlate.ProgramStates.StartUp)
+.define WPFShutDown				PartMaintNet.BoilerPlate.RunningToolkit .or. (PartMaintNet.BoilerPlate.RunningWPF .and. PartMaintNet.BoilerPlate.ProgramState .eq. PartMaintNet.BoilerPlate.ProgramStates.ShutDown)
+.define WPFMenuSignal			PartMaintNet.BoilerPlate.RunningToolkit .or. (PartMaintNet.BoilerPlate.RunningWPF .and. PartMaintNet.BoilerPlate.ProgramState .eq. PartMaintNet.BoilerPlate.ProgramStates.MenuSignal)
+.define WPFFieldProcessing		PartMaintNet.BoilerPlate.RunningToolkit .or. (PartMaintNet.BoilerPlate.RunningWPF .and. PartMaintNet.BoilerPlate.ProgramState .eq. PartMaintNet.BoilerPlate.ProgramStates.FieldProcessing)
+.define WPFSetComplete			PartMaintNet.BoilerPlate.RunningToolkit .or. (PartMaintNet.BoilerPlate.RunningWPF .and. PartMaintNet.BoilerPlate.ProgramState .eq. PartMaintNet.BoilerPlate.ProgramStates.InputSetComplete)
+.define WPFListLoad				PartMaintNet.BoilerPlate.RunningToolkit .or. (PartMaintNet.BoilerPlate.RunningWPF .and. PartMaintNet.BoilerPlate.ProgramState .eq. PartMaintNet.BoilerPlate..ListLoad)
+;.define WPFMessageBox(text)		PartMaintNet.BoilerPlate.DisplayMessageBox(text)
+;.define WPFQuestionBox(text)	PartMaintNet.BoilerPlate.QuestionMessageBox(text)
+
+

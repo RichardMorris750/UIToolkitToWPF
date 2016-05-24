@@ -1,0 +1,85 @@
+﻿import System
+import System.Collections.Generic
+import System.Linq
+import System.Text
+import System.Windows
+import System.Windows.Controls
+import System.Windows.Data
+import System.Windows.Documents
+import System.Windows.Input
+import System.Windows.Media
+import System.Windows.Media.Imaging
+import System.Windows.Navigation
+import System.Windows.Shapes
+
+namespace WPFPartMaintenance.View
+
+    ;;; <summary>
+    ;;; Interaction logic for SupplierList.xaml
+    ;;; </summary>
+    public partial class SupplierList extends UserControl
+    
+        public method SupplierList
+        endparams
+        proc
+            this.InitializeComponent()
+		endmethod
+
+		private anchorPoint	,@Point
+		private currentPoint	,@Point
+		private isInDrag	,boolean	,false
+		
+		private method root_MouseLeftButtonDown, void
+			sender,@Object
+			eArgs,@MouseButtonEventArgs
+			endparams
+		proc
+			data element	,@FrameworkElement
+			element=^as(sender, FrameworkElement)
+			anchorPoint=eArgs.GetPosition(^null)
+			element.CaptureMouse()
+			isInDrag=true
+			this.Cursor=Cursors.Hand
+			eArgs.Handled=true
+		endmethod
+		
+		private transform	,@TranslateTransform	,new TranslateTransform()
+		
+		private method root_MouseMove, void
+			sender,@Object
+			eArgs,@MouseEventArgs 
+			endparams
+		proc
+			if (isInDrag)
+			begin
+				data element,@FrameworkElement
+				element=^as(sender, FrameworkElement)
+				currentPoint = eArgs.GetPosition(^null)
+				
+				transform.X += currentPoint.X-anchorPoint.X
+				transform.Y += currentPoint.Y-anchorPoint.Y
+				
+				this.RenderTransform=transform
+				anchorPoint=currentPoint
+			end
+			
+		endmethod
+		
+		private method root_MouseLeftButtonUp, void
+			sender,@Object
+			eArgs,@MouseButtonEventArgs
+			endparams
+		proc
+			if (isInDrag)
+			begin
+				data element	,@FrameworkElement
+				element=^as(sender, FrameworkElement)
+				element.ReleaseMouseCapture()
+				isInDrag=false
+				this.Cursor=Cursors.Arrow
+				eArgs.Handled=true
+			end
+		endmethod
+		
+    endclass
+endnamespace

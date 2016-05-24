@@ -1,0 +1,527 @@
+import System
+import System.Collections.Generic
+import System.Text
+import Symphony.Conductor.ViewModel
+import System.Windows
+import Symphony.Conductor.Types
+import Symphony.UIToolkit.Common
+import System.Collections.ObjectModel
+import WPFPartMaintenance.Model
+import Symphony.Conductor.Model
+import System.Reflection
+import Linq
+import Symphony.Conductor.Commands
+import Symphony.UIToolkit.Toolbar
+import Symphony.UIToolkit.Menu
+
+namespace WPFPartMaintenance.ViewModel
+	
+	public class PartMaintenanceViewModel extends BaseViewModel
+		
+		public method PartMaintenanceViewModel
+			sender								,@FrameworkElement
+			endparams
+			parent(sender)
+		proc
+			createCommands()
+			
+			createObjects()
+			
+			bindHandlers()
+			
+		endmethod
+		
+.region "Enable the hsot to 'show' window"
+		
+		public method ShowWindow, void
+			endparams
+		proc
+			if (mProgramDataHandle)
+			begin
+				;;first call back into the host with a "start-up" request
+				RaiseTKMenuSignal("STARTUP")
+				
+				;;load the part list
+				LoadPartList()
+				LoadGroupList()
+				LoadSupplierList()
+			end
+			
+			;;show the window
+			((Window)ParentView).ShowDialog()
+			
+			if (mProgramDataHandle)
+			begin
+				;;shut the prgoram down correctly
+				RaiseTKMenuSignal("SHUTDOWN")
+			end
+			
+		endmethod
+		
+.endregion
+		
+.region "Menu & Toolbar Commands"
+		
+		private method createCommands, void
+			endparams
+		proc
+			data mToolbar	,@ToolbarController
+			
+			;;#SNIPPET+#
+			mCommands = new MenuController()
+			
+			;;define the required "commands".  These can be existing menu and toolbar commands
+			;;and window/list commands
+			
+			;;these commands map to the original menu entries
+			mCommands.LoadCommand("F_NEW", doCommandExecuted, Visibility.Visible)
+			mCommands.LoadCommand("F_EXIT", doCommandExecuted, Visibility.Visible)
+			
+			;;these commands map to the buttons on the original toolkit UI
+			mCommands.LoadCommand("B_SAVE", doCommandExecuted, Visibility.Visible)
+			mCommands.LoadCommand("B_CANCEL", doCommandExecuted, Visibility.Visible)
+			mCommands.LoadCommand("B_DELETE", doCommandExecuted, Visibility.Visible)
+			
+			;;#SNIPPET-#
+			
+			mreturn			
+			
+		endmethod
+		
+		;;
+		;;event handler for menu and toolbar commands
+		;;
+		private method doCommandExecuted	,void
+			sender							,@Object
+			param							,string
+			endparams
+		proc
+			;;just raise the event back to the host program
+			RaiseTKMenuSignal(((ToolkitCommand)sender).MenuStringValue)
+			
+			;;are we trying to exit??
+			if (mProgramDataHandle)
+				if (((ToolkitCommand)sender).MenuStringValue == "F_EXIT")
+					((Window)ParentView).Close()
+			
+			
+		endmethod
+		
+		private mCommands	,@MenuController
+		
+		public property Commands, @MenuController
+			method get
+			proc
+				mreturn mCommands
+			endmethod
+		endproperty
+		
+.endregion
+		
+		
+.region "List creation"
+		
+		private method createObjects, void
+			endparams
+		proc
+			mPartItem = new Part_Data()
+			
+			mPartList = new AsyncObservableCollection<DataObjectBase>()
+			
+			mGroupList = new AsyncObservableCollection<DataObjectBase>()
+			
+			mSupplierList = new AsyncObservableCollection<DataObjectBase>()
+			
+		endmethod
+		
+.endregion
+		
+.region "data object validation handlers"
+		
+		;;#SNIPPET+CHANGE#
+		public delegate ChangeMethodEventHandler	,void
+			in rpsName								,string
+			inout messageData						,@DataChangedMessage
+		enddelegate
+		
+		public event ChangeMethod	,@ChangeMethodEventHandler
+		
+		private method doChangeMethod_part		,void
+			inout messageData					,@DataChangedMessage
+			endparams
+		proc
+			raiseevent(ChangeMethod, Part_Data.RPSStructureName, messageData)
+		endmethod
+		
+		;;#SNIPPET-CHANGE#
+		
+		private method bindHandlers, void
+			endparams
+		proc
+			;;#SNIPPET+BIND CHANGE#
+			mPartItem.ExecuteChangeMethod += doChangeMethod_part
+			;;#SNIPPET-BIND CHANGE#
+			
+			addhandler(AfterNavigateState, doAfterNAvigateState)
+			
+			mreturn
+			
+		endmethod
+		
+		private method doAfterNAvigateState, void
+			eArgs, @NavigateFromStateEventArgs 
+			endparams
+		proc
+			if (eArgs.CurrentStateName == "InputViewState")
+				PartItem.IdIsFocused = true
+		endmethod
+		
+		
+.endregion
+		
+.region "Program data"
+		
+		private mProgramDataHandle	,Int32
+		public property ProgramDataHandle, Int32
+			method get
+			proc
+				mreturn mProgramDataHandle
+			endmethod
+			method set
+			proc
+				mProgramDataHandle = value
+			endmethod
+		endproperty
+		
+		private mProgramDataSize	,Int32
+		public property ProgramDataSize, Int32
+			method get
+			proc
+				mreturn mProgramDataSize
+			endmethod
+			method set
+			proc
+				mProgramDataSize = value
+			endmethod
+		endproperty
+		
+.endregion
+		
+		
+.region "Part list details"
+		
+		private mPartList	,@AsyncObservableCollection<DataObjectBase>
+		
+		public method LoadPartList, void
+			endparams
+		proc
+			;;#SNIPPET+#
+			performLoad(mPartList, ^typeof(Part_Data), "", "part_load",
+			&	Part_Data.RPSStructureSize, mProgramDataHandle, mProgramDataSize)
+			;;#SNIPPET-#
+			mreturn
+			
+		endmethod
+		
+		public property PartList, @AsyncObservableCollection<DataObjectBase>
+			method get
+			proc
+				mreturn mPartList
+			endmethod
+		endproperty
+		
+		private mPartListItem	,@Part_Data
+		
+		public property PartListItem, @Part_Data
+			method get
+			proc
+				mreturn mPartListItem
+			endmethod
+			method set
+			proc
+				mPartListItem = value
+			endmethod
+		endproperty
+		
+		private mPartSelect	,@GenericCommand	,new GenericCommand("PARTSEL", doPartSelect)
+		
+		public property PartSelect, @GenericCommand
+			method get
+			proc
+				mreturn mPartSelect
+			endmethod
+		endproperty
+		
+		
+		private method doPartSelect, void
+			sender						,@Object
+			param						,string
+			endparams
+		proc
+			if (PartListItem != ^null)
+				RaiseTKMenuSignal("F_MODIFY")
+		endmethod
+		
+.endregion
+		
+.region "Group list details"
+		
+		private mGroupList	,@AsyncObservableCollection<DataObjectBase>
+		
+		public method LoadGroupList, void
+			endparams
+		proc
+			;;#SNIPPET+#
+			performLoad(mGroupList, ^typeof(Group_Data), "", "Drill_Group_Id_load",
+			&	Group_Data.RPSStructureSize, mProgramDataHandle, mProgramDataSize)
+			;;#SNIPPET-#
+			mreturn
+			
+		endmethod
+		
+		public property GroupList, @AsyncObservableCollection<DataObjectBase>
+			method get
+			proc
+				mreturn mGroupList
+			endmethod
+		endproperty
+		
+		private mGroupListItem	,@Group_Data
+		
+		public property GroupListItem, @Group_Data
+			method get
+			proc
+				mreturn mGroupListItem
+			endmethod
+			method set
+			proc
+				mGroupListItem = value
+			endmethod
+		endproperty
+		
+		private mGroupSelect	,@GenericCommand	,new GenericCommand("GROUPSEL", doGroupSelect)
+		
+		public property GroupSelect, @GenericCommand
+			method get
+			proc
+				mreturn mGroupSelect
+			endmethod
+		endproperty
+		
+		
+		private method doGroupSelect, void
+			sender						,@Object
+			param						,string
+			endparams
+		proc
+			if (mGroupListItem != ^null)
+			begin
+				PartItem.Groupid = mGroupListItem.Group_id
+				StateCompleted()
+			end
+		endmethod
+		
+.endregion
+		
+.region "Supplier list details"
+		
+		private mSupplierList	,@AsyncObservableCollection<DataObjectBase>
+		
+		public method LoadSupplierList, void
+			endparams
+		proc
+			;;#SNIPPET+#
+			performLoad(mSupplierList, ^typeof(Supplier_Data), "", "Drill_Supplier_Id_load",
+			&	Supplier_Data.RPSStructureSize, mProgramDataHandle, mProgramDataSize)
+			;;#SNIPPET-#
+			mreturn
+			
+		endmethod
+		
+		public property SupplierList, @AsyncObservableCollection<DataObjectBase>
+			method get
+			proc
+				mreturn mSupplierList
+			endmethod
+		endproperty
+		
+		private mSupplierListItem	,@Supplier_Data
+		
+		public property SupplierListItem, @Supplier_Data
+			method get
+			proc
+				mreturn mSupplierListItem
+			endmethod
+			method set
+			proc
+				mSupplierListItem = value
+			endmethod
+		endproperty
+		
+		private mSupplierSelect	,@GenericCommand	,new GenericCommand("SUPPSEL", doSupplierSelect)
+		
+		public property SupplierSelect, @GenericCommand
+			method get
+			proc
+				mreturn mSupplierSelect
+			endmethod
+		endproperty
+		
+		
+		private method doSupplierSelect, void
+			sender						,@Object
+			param						,string
+			endparams
+		proc
+			if (mSupplierListItem != ^null)
+			begin
+				PartItem.Supplierid = mSupplierListItem.Supplier_id
+				StateCompleted()
+			end
+		endmethod
+		
+.endregion
+		
+.region "Part entry"
+		
+		private mPartItem	,@Part_Data
+		
+		public property PartItem, @Part_Data
+			method get
+			proc
+				mreturn mPartItem
+			endmethod
+			method set
+			proc
+				mPartItem = value
+			endmethod
+		endproperty
+		
+		
+.endregion
+		
+.region "collection loading"
+		
+		private method performLoad	,void
+			in req listCollection	,@AsyncObservableCollection<DataObjectBase>
+			in req objectType		,@Type
+			in req hostMethodName	,string
+			in req loadMethodName	,string
+			in req loadDataSize		,Int32
+			in req progDataHdl		,Int32
+			in req progDataSize		,int32
+			endparams
+			
+			structure tmpStr
+				fld	,a1
+			endstructure
+		proc
+			;;use the load method to load the collection
+			
+			listCollection.ClearCollection()
+			data endOfList	,boolean	,false
+			data listData	,string		,""
+			data listItem	,Int32		,0
+			
+			
+			
+			data classTypeInfo		,@TypeInfo			,IntrospectionExtensions.GetTypeInfo(objectType)
+			if (classTypeInfo != ^null)
+			begin
+				data classConstructor	,@ConstructorInfo
+				
+				data item	,@ConstructorInfo
+				foreach item in classTypeInfo.DeclaredConstructors
+				begin
+					classConstructor = item
+					if (classConstructor.ToString() == "Void .ctor(System.String)")
+						exitloop
+				end
+				
+				data ctorArgs			,[#]@Object	,new Object[1]
+				repeat 
+				begin
+					raiseevent(LookupLoad, hostMethodName, loadMethodName, loadDataSize, listItem, endOfList, listData, progDataHdl, progDataSize)
+					if (endOfList)
+						exitloop
+					
+					if (listItem)
+					begin
+						;;create a new object and add it to the colleciton
+						
+						ctorArgs[1] = listData
+						data classInstance = classConstructor.Invoke(ctorArgs)
+						
+						listCollection.AddToCollection((DataObjectBase)classInstance)
+					end
+					incr listItem
+					
+				end
+			end
+			
+		endmethod
+		
+.endregion
+		
+		
+.region "Lookup processing methods"
+		
+		public delegate LookupLoadEventHandler	,void
+			req in    hostMethodName			,string
+			req in    loadMethodName			,string
+			req in    loadDataSize				,Int32
+			req in    loadItemNumber			,Int32
+			req inout endOfList					,boolean
+			req inout listData					,string
+			in req progDataHdl					,Int32
+			in req progDataSize					,int32
+		enddelegate
+		
+		public event LookupLoad	,@LookupLoadEventHandler
+		
+.endregion
+		
+.region "Set Processing"
+		
+		public method DefineInputSet	,void
+			setName						,string
+			endparams
+		proc
+			
+			using setName select
+			("new"),
+			begin
+				PartItem.SetFieldEnabledStatus(true, "*ALL*")
+			end
+			("modify"),
+			begin
+				PartItem.SetFieldEnabledStatus(true, "*ALL*")
+				PartItem.IdIsEnabled = false
+				PartItem.GroupidIsFocused = true
+			end
+			endusing
+		endmethod
+.endregion
+		
+.region "Status bar information"
+		
+		private mStatusBarText	,string
+		
+		public property StatusBarText, string
+			method get
+			proc
+				mreturn mStatusBarText
+			endmethod
+			method set
+			proc
+				mStatusBarText = value
+				RaisePropertyChanged("StatusBarText")
+			endmethod
+		endproperty
+		
+.endregion
+		
+		
+	endclass
+	
+endnamespace

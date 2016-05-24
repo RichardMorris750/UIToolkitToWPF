@@ -1,0 +1,69 @@
+.include 'INC:program.def'
+
+subroutine part_list
+	a_itemID	,n
+	.include 'INC:program_data.def'
+	endparams
+
+.include 'WND:tools.def'
+
+record 
+	request	,i4
+endrecord
+
+proc
+	if (WPFStartup)
+	begin
+		if (DoingTK) then 
+		begin
+			m_enable(D_ENTRY, menuFileID, "F_NEW")
+		end
+		else
+		begin
+			;;#SNIPPET+CONTROL OPTIONS#
+			prgVM.Commands.EnableCommand("F_NEW")
+			prgVM.Commands.DisableCommand("B_SAVE")
+			prgVM.Commands.DisableCommand("B_CANCEL")
+			prgVM.Commands.DisableCommand("B_DELETE")
+			;;#SNIPPET-CONTROL OPTIONS#
+			xreturn
+		end
+	end
+	
+	repeat
+	begin
+		if (DoingTK)
+			
+			l_select(listID, request = D_LNOP, part_data,,,,,,,,,,,,,program_data)
+		
+		
+		
+		if (g_entnam == "  ")
+			g_entnam = "F_MODIFY"
+		
+		using g_entnam select
+		("F_EXIT"),
+			exitloop
+		("F_NEW"),
+		begin
+			;;new item selected
+			inpmode = "add"
+			if (DoingTK) m_signal("TS_TABNEXT")
+			exitloop
+		end
+		("F_MODIFY"),
+		begin
+			;;item selected
+			;;#SNIPPET+SELECTION#
+			if (DoingWPF) part_data = prgVM.PartListItem.SynergyRecord
+			;;#SNIPPET-SELECTION#
+			
+			inpmode = "modify"
+			if (DoingTK) m_signal("TS_TABNEXT")
+			exitloop
+		end
+		endusing
+	end
+	
+	xreturn
+endsubroutine

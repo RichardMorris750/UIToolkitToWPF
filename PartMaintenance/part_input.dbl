@@ -1,0 +1,254 @@
+.include 'INC:program.def'
+
+subroutine part_input
+	a_itemID	,n
+	.include 'INC:program_data.def'
+	endparams
+
+.include 'WND:tools.def'
+
+record 
+	dataInError	,i4
+endrecord
+	
+proc
+	
+	if (WPFStartup)
+	begin
+		if (DoingTK) then 
+		begin
+			m_disable(D_ENTRY, menuFileID, "F_NEW")
+		end
+		else
+		begin
+			;;#SNIPPET+CONTROL OPTIONS#
+			prgVM.Commands.DisableCommand("F_NEW")
+			prgVM.Commands.EnableCommand("B_SAVE")
+			prgVM.Commands.EnableCommand("B_CANCEL")
+			prgVM.Commands.EnableCommand("B_DELETE")
+			;;#SNIPPET-CONTROL OPTIONS#
+		end
+
+		if (inpmode != "add") then
+			if (DoingTK) then
+			begin
+				i_display(a_itemID, "all", part_data)
+				m_disable(D_ENTRY, menuFileID, "F_NEW")
+				b_enable(a_itemID, "B_DELETE")
+				prgVM.Commands.DisableCommand("F_NEW")
+				prgVM.Commands.EnableCommand("B_DELETE")
+			end
+			else
+			begin
+				;;#SNIPPET+DISPLAY#
+				prgVM.DefineInputSet("modify")
+				prgVM.PartItem.SynergyRecord = part_data
+				prgVM.PartItem.FieldValidDetails("ID")
+				prgVM.PartItem.FieldValidDetails("GROUPID")
+				prgVM.PartItem.FieldValidDetails("SUPPLIERID")
+				;;#SNIPPET-DISPLAY#
+			end
+		else
+		begin
+			if (DoingTK) then
+			begin
+				i_init(a_itemID, "all", part_data)
+				b_disable(a_itemID, "B_DELETE")
+			end
+			else
+			begin
+				;;#SNIPPET+INITIALIZE#
+				prgVM.DefineInputSet("new")
+				prgVM.PartItem.InitData()
+				part_data = prgVM.PartItem.SynergyRecord
+				call validate_record
+				;;#SNIPPET-INITIALIZE#
+			end
+		end
+		if (DoingWPF) xreturn	
+	end
+
+	repeat
+	begin
+		if (DoingTK)
+			i_input(a_itemID, "all", part_data,,,, D_NOTERM,,, program_data)
+		using g_entnam select
+		("F_EXIT"),
+			exitloop
+		("B_SAVE"),
+		begin
+			dataInError = 0
+			call validate_record
+			if (dataInError == 0)
+			begin
+				call save_record
+				;;force the list re-load
+				if (DoingTK) then 
+				begin
+					l_restart(listID)
+					m_signal("TS_TAB1")
+				end
+				else
+				begin
+					;;#SNIPPET+LIST RESET#
+					prgVM.LoadPartList()
+					;;#SNIPPET-LIST RESET#
+				end
+				exitloop			
+			end
+		end
+		("B_CANCEL"),
+		begin
+			if (DoingTK) m_signal("TS_TAB1")
+			exitloop
+		end
+		("B_DELETE"),
+		begin
+			if (inpmode != "add")
+			begin
+				call delete_record
+				if (DoingTK) then
+				begin
+					l_restart(listID)
+					m_signal("TS_TAB1")
+				end
+				else
+				begin
+					;;#SNIPPET+LIST RESET#
+					prgVM.LoadPartList()
+					;;#SNIPPET-LIST RESET#
+				end
+				exitloop
+			end
+			
+		end
+		endusing
+		
+		if (DoingWPF) exitloop
+		
+	end
+	
+	xreturn
+	
+validate_record,
+	;;call the change methods
+	if (DoingTK) then 
+	begin
+		if (!%trimz(part_data.id)) 
+		begin
+			dataInError = 1
+			u_message("Part ID required")
+		end
+		if (!dataInError)
+			dataInError = %Change_Group_Id(part_data.groupid, part_data.groupid, dataInError, , part_data, program_data)
+		if (!dataInError)
+			dataInError = %Change_Supplier_Id(part_data.supplierid, part_data.supplierid, dataInError, , part_data, program_data)
+	end
+	else
+	begin
+		;;#SNIPPET+VALIDATION#
+		data idDataInError			,i4	,0
+		data groupDataInError		,i4	,0
+		data supplierDataInError		,i4	,0
+					
+		prgVM.PartItem.FieldValidDetails("ID")
+
+		if (!%trimz(part_data.id)) 
+		begin
+			idDataInError = 1
+			prgVM.PartItem.FieldErrorDetails("ID", "Part ID required")
+		end
+
+		groupDataInError = %Change_Group_Id(part_data.groupid, part_data.groupid,
+		&	groupDataInError = D_OK, , part_data, program_data)
+
+		supplierDataInError = %Change_Supplier_Id(part_data.supplierid, part_data.supplierid,
+		&	supplierDataInError = D_OK, , part_data, program_data)
+					
+		if (idDataInError || groupDataInError || supplierDataInError)
+			dataInError = 1
+		;;#SNIPPET-VALIDATION#
+	end
+	
+	return 
+	
+save_record,
+	
+	try 
+	begin
+		if (inpmode == "add") then 
+		begin
+			store(partChanID, part_data)
+			if (DoingTK) then 
+				e_sect("Last operation SAVE was successful", D_FOOTER,D_CLEAR,D_LEFT)
+			else
+			begin
+				;;#SNIPPET+SAVE SUCCESS#
+				prgVM.StatusBarText = "Last operation SAVE was successful"
+				;;#SNIPPET-SAVE SUCCESS#
+			end
+		end
+		else
+		begin
+			data tmpPart	,a^size(part_data)
+			read(partChanID, tmpPart, part_data.id)
+			write(partChanID, part_data)
+
+			if (DoingTK) then 
+				e_sect("Last operation UPDATE was successful", D_FOOTER,D_CLEAR,D_LEFT)
+			else
+			begin
+				;;#SNIPPET+UPDATE SUCCESS#
+				prgVM.StatusBarText = "Last operation UPDATE was successful"
+				;;#SNIPPET-UPDATE SUCCESS#
+			end
+		end
+	end
+	catch (e, @Exception)
+	begin
+		if (DoingTK) then 
+			e_sect("Last operation SAVE/UPDATE was unsuccessful: " + e.Message, D_FOOTER,D_CLEAR,D_LEFT)
+		else
+		begin
+			;;#SNIPPET+FAILURE#
+			prgVM.StatusBarText = "Last operation SAVE/UPDATE was unsuccessful: " + e.Message
+			;;#SNIPPET-FAILURE#
+		end
+	end
+	endtry
+
+	return
+
+delete_record,
+	
+	try 
+	begin
+		data tmpPart	,a^size(part_data)
+		read(partChanID, tmpPart, part_data.id)
+		delete(partChanID)
+		if (DoingTK) then 
+			e_sect("Last operation DELETE was successful", D_FOOTER,D_CLEAR,D_LEFT)
+		else
+		begin
+			;;#SNIPPET+DELETE SUCCESS#
+			prgVM.StatusBarText = "Last operation DELETE was successful"
+			;;#SNIPPET-DELETE SUCCESS#
+		end
+	end
+	catch (e, @Exception)
+	begin
+		if (DoingTK) then 
+			e_sect("Last operation DELETE was unsuccessful: " + e.Message, D_FOOTER,D_CLEAR,D_LEFT)
+		else
+		begin
+			;;#SNIPPET+DELETE FAILURE#
+			prgVM.StatusBarText = "Last operation DELETE was unsuccessful: " + e.Message
+			;;#SNIPPET-DELETE FAILURE#
+		end
+	end
+	endtry
+
+	return
+
+endsubroutine
+

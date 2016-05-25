@@ -38,10 +38,16 @@
                 <synUI:FieldControl Grid.Row="0" Grid.Column="1" Style="{StaticResource Part_Id_style}"></synUI:FieldControl>
 
                 <Label Grid.Row="1" Grid.Column="0" Style="{StaticResource Part_Groupid_prompt}"></Label>
-                <synUI:FieldControl Grid.Row="1" Grid.Column="1" Style="{StaticResource Part_Groupid_style}"></synUI:FieldControl>
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                    <synUI:FieldControl Style="{StaticResource Part_Groupid_style}"></synUI:FieldControl>
+                    <TextBlock Text="{Binding Path=GroupData.Description}" Margin="10,0,0,0" VerticalAlignment="Center"></TextBlock>
+                </StackPanel>
 
                 <Label Grid.Row="2" Grid.Column="0" Style="{StaticResource Part_Supplierid_prompt}"></Label>
-                <synUI:FieldControl Grid.Row="2" Grid.Column="1" Style="{StaticResource Part_Supplierid_style}"></synUI:FieldControl>
+                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                    <synUI:FieldControl Style="{StaticResource Part_Supplierid_style}"></synUI:FieldControl>
+                    <TextBlock Text="{Binding Path=SupplierData.Name}" Margin="10,0,0,0" VerticalAlignment="Center"></TextBlock>
+                </StackPanel>
 
                 <Label Grid.Row="3" Grid.Column="0" Style="{StaticResource Part_Description_prompt}"></Label>
                 <synUI:FieldControl Grid.Row="3" Grid.Column="1" Style="{StaticResource Part_Description_style}"></synUI:FieldControl>

@@ -17,9 +17,11 @@ proc
 	begin
 		;;#SNIPPET+CHANGE#
 		if (DoingWPF) prgVM.PartItem.FieldValidDetails("GROUPID")
+		prgVM.PartItem.GroupData.InitData()
 		;;#SNIPPET-CHANGE#
 
 		read(groupChanID, group_data, a_data_stored, MATCH=Q_EQ) [ERR=fileError]
+		prgVM.PartItem.GroupData.SynergyRecord = group_data
 		if (0)
 		begin
 fileError,

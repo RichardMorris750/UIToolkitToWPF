@@ -120,6 +120,7 @@
     <Compile Include="Content\Supplier_Collection.CodeGen.dbc" />
     <Compile Include="Model\Group_Data.CodeGen.dbc" />
     <Compile Include="Model\Part_Data.CodeGen.dbc" />
+    <Compile Include="Model\Part_Data.dbc" />
     <Compile Include="Model\Supplier_Data.CodeGen.dbc" />
     <Compile Include="Properties\AssemblyInfo.dbl" />
     <Compile Include="ViewModel\PartMaintenanceViewModel.dbc" />

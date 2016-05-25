@@ -1,0 +1,35 @@
+import System
+import System.Collections.Generic
+import System.Text
+
+
+namespace WPFPartMaintenance.Model
+
+	public partial class Part_Data
+	
+		private mGroupData	,@Group_Data
+
+		public property GroupData, @Group_Data
+			method get
+			proc
+				if (mGroupData ==^null)
+					mGroupData = new Group_Data()
+				mreturn mGroupData
+			endmethod
+		endproperty
+
+		private mSupplierData	,@Supplier_Data
+		
+		public property SupplierData, @Supplier_Data
+			method get
+			proc
+				if (mSupplierData ==^null)
+					mSupplierData = new Supplier_Data()
+				mreturn mSupplierData
+			endmethod
+		endproperty
+		
+
+	endclass
+
+endnamespace

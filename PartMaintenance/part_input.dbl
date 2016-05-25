@@ -46,6 +46,15 @@ proc
 				prgVM.PartItem.FieldValidDetails("ID")
 				prgVM.PartItem.FieldValidDetails("GROUPID")
 				prgVM.PartItem.FieldValidDetails("SUPPLIERID")
+				
+				;;read and display the associated data
+				read(groupChanID, group_data, part_data.groupid, MATCH=Q_EQ) [ERR=fileError]
+				prgVM.PartItem.GroupData.SynergyRecord = group_data
+
+				read(supplierChanID, supplier_data, part_data.supplierid) [ERR=fileError]
+				prgVM.PartItem.SupplierData.SynergyRecord = supplier_data
+
+fileError,
 				;;#SNIPPET-DISPLAY#
 			end
 		else

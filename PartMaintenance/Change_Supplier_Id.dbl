@@ -18,9 +18,11 @@ proc
 		
 		;;#SNIPPET+CHANGE#
 		if (DoingWPF) prgVM.PartItem.FieldValidDetails("SUPPLIERID")
+		prgVM.PartItem.SupplierData.InitData()
 		;;#SNIPPET-CHANGE#
 
 		read(supplierChanID, supplier_data, a_data_stored) [ERR=fileError]
+		prgVM.PartItem.SupplierData.SynergyRecord = supplier_data
 		if (0)
 		begin
 fileError,

@@ -2253,6 +2253,38 @@ namespace WPFPartMaintenance.Model
 		
 		endproperty
 		
+		public  property GroupData, @WPFPartMaintenance.Model.Group_Data
+			Method get
+			proc
+				begin
+				data tmp, @WPFPartMaintenance.Model.Group_Data
+				parent.GetProperty("GroupData",tmp)
+				tmp.gennet_init_internal_handles()
+				mreturn tmp
+				tmp = new WPFPartMaintenance.Model.Group_Data(0, tmp)
+				
+				end
+			
+			endmethod
+		
+		endproperty
+		
+		public  property SupplierData, @WPFPartMaintenance.Model.Supplier_Data
+			Method get
+			proc
+				begin
+				data tmp, @WPFPartMaintenance.Model.Supplier_Data
+				parent.GetProperty("SupplierData",tmp)
+				tmp.gennet_init_internal_handles()
+				mreturn tmp
+				tmp = new WPFPartMaintenance.Model.Supplier_Data(0, tmp)
+				
+				end
+			
+			endmethod
+		
+		endproperty
+		
 		public  property ObjectRaisesPropertyChanged, Symphony.Conductor.Model.DataObjectNotificationState
 			Method get
 			proc

@@ -5,6 +5,13 @@ VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{BBD0F5D1-1CC4-42FD-BA4C-A96779C64378}") = "WPFPartMaintenance", "WPFPartMaintenance\WPFPartMaintenance.synproj", "{CE3A72C6-EDC8-4893-989D-830D4049A17A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A37494D0-0131-4AB4-B986-8ADBB17A8CEF}"
+	ProjectSection(SolutionItems) = preProject
+		Migrating From UI Toolkit to WPF.pdf = Migrating From UI Toolkit to WPF.pdf
+		Migrating UI Toolkit to WPF (Richard Morris).ppsx = Migrating UI Toolkit to WPF (Richard Morris).ppsx
+		WPFToolkitWorkshop.zip = WPFToolkitWorkshop.zip
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
